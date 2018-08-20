@@ -1,5 +1,6 @@
 package quickpatch.example;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -14,21 +15,28 @@ public class MainActivity extends AppCompatActivity {
         System.loadLibrary("quickpatch");
     }
 
+    public static Bundle sBundle;
+
     public MainActivity() {
     }
 
+    @SuppressLint("MissingSuperCall")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        // sBundle = savedInstanceState;
+        // super.onCreate(savedInstanceState);
 
         NativeBridge nativeBridge = new NativeBridge();
         System.out.println("testing call non-virtual method:");
-        nativeBridge.callNonvirtualVoidMethod(new SubSubClass());
+//        for (int i = 0; i < 100 * 1000 * 1000; i++) {
+//            nativeBridge.callNonvirtualVoidMethod(new SubSubClass());
+//            System.out.println("current: " + i);
+//        }
         // test helper
-        nativeBridge.callNonvirtualVoidMethodHelper(new SubSubClass(),
-                "quickpatch/example/SubClass",
-                "foo",
-                "()V");
+//        nativeBridge.callNonvirtualVoidMethodHelper(new SubSubClass(),
+//                "quickpatch/example/SubClass",
+//                "foo",
+//                "()V");
 
         final ProxyResult proxyResult = Patcher.proxy(this,
                 "quickpatch.example.MainActivity",
@@ -37,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
         if (proxyResult.isPatched) {
             // return proxyResult.returnValue;
         } else {
+            super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
             // TextView text = findViewById(R.id.text);
             // text.setText("HELLO BUG WORLD: " + staticGetText(false));

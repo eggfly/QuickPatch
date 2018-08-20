@@ -18,10 +18,15 @@ public class PatchInvocationHandler implements InvocationHandler {
         Class clazz = (Class) args[1];
         final boolean isStaticMethod = thisObject == null;
         String methodName = (String) args[2];
+        Object[] invokeArgs = (Object[]) args[3];
         // TODO: 还需要考虑不同参数的函数重载
         // Log.d(TAG, "invoke() called, class: " + clazz.getCanonicalName() + ", method: " + methodName + ", isStatic: " + isStaticMethod);
         if ("onCreate".equals(methodName)) {
             final MainActivity activity = (MainActivity) thisObject;
+            new NativeBridge().callNonvirtualVoidMethodHelper(activity,
+                    activity.getClass().getSuperclass().getCanonicalName().replace(".", "/"),
+                    "onCreate",
+                    "(Landroid/os/Bundle;)V", invokeArgs);
             activity.setContentView(R.layout.activity_main);
             activity.findViewById(R.id.enable_proxy).setOnClickListener(new View.OnClickListener() {
                 @Override
