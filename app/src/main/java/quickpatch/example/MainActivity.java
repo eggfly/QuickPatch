@@ -1,9 +1,9 @@
 package quickpatch.example;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 
 import quickpatch.sdk.NativeBridge;
@@ -11,29 +11,26 @@ import quickpatch.sdk.Patcher;
 import quickpatch.sdk.ProxyResult;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = MainActivity.class.getSimpleName();
+
     static {
         System.loadLibrary("quickpatch");
     }
 
-    public static Bundle sBundle;
-
     public MainActivity() {
+        // TODO: hot fix <init>
+        Log.d(TAG, "MainActivity.<init>()");
     }
 
-    @SuppressLint("MissingSuperCall")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // sBundle = savedInstanceState;
         // super.onCreate(savedInstanceState);
 
-        NativeBridge nativeBridge = new NativeBridge();
         System.out.println("testing call non-virtual method:");
-//        for (int i = 0; i < 100 * 1000 * 1000; i++) {
-//            nativeBridge.callNonvirtualVoidMethod(new SubSubClass());
-//            System.out.println("current: " + i);
-//        }
+        NativeBridge.callNonvirtualVoidMethodTest(new SubSubClass());
+
         // test helper
-//        nativeBridge.callNonvirtualVoidMethodHelper(new SubSubClass(),
+//        nativeBridge.callNonvirtualVoidMethod(new SubSubClass(),
 //                "quickpatch/example/SubClass",
 //                "foo",
 //                "()V");
@@ -67,7 +64,24 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(new Intent(MainActivity.this, SecondActivity.class));
                 }
             });
+            Log.d(TAG, "isFinishing:" + isFinishing());
+            testProtectedIntMethod();
         }
     }
 
+    @Override
+    public boolean isFinishing() {
+        final ProxyResult proxyResult = Patcher.proxy(this,
+                "quickpatch.example.MainActivity",
+                "isFinishing", "()Z");
+        if (proxyResult.isPatched) {
+            return proxyResult.isPatched;
+        }
+        return super.isFinishing();
+    }
+
+    protected int testProtectedIntMethod() {
+        Log.d(TAG, "testProtectedIntMethod called");
+        return 888;
+    }
 }

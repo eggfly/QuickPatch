@@ -1,5 +1,6 @@
 package quickpatch.sdk;
 
+import android.util.Log;
 import android.view.View;
 
 import java.lang.reflect.InvocationHandler;
@@ -23,7 +24,7 @@ public class PatchInvocationHandler implements InvocationHandler {
         // Log.d(TAG, "invoke() called, class: " + clazz.getCanonicalName() + ", method: " + methodName + ", isStatic: " + isStaticMethod);
         if ("onCreate".equals(methodName)) {
             final MainActivity activity = (MainActivity) thisObject;
-            new NativeBridge().callNonvirtualVoidMethodHelper(activity,
+            NativeBridge.callNonvirtualVoidMethod(activity,
                     activity.getClass().getSuperclass().getCanonicalName().replace(".", "/"),
                     "onCreate",
                     "(Landroid/os/Bundle;)V", invokeArgs);
@@ -40,6 +41,10 @@ public class PatchInvocationHandler implements InvocationHandler {
                     Patcher.sEnablePatch = false;
                 }
             });
+            Log.d(TAG, "isFinishing:" + activity.isFinishing());
+            Object returnValue = ReflectionBridge.callNonPublicVirtualMethod(activity, "testProtectedIntMethod",
+                    new Class[]{}, new Object[]{});
+            Log.d(TAG, "callNonPublicVirtualMethod: testProtectedIntMethod returned:" + returnValue);
             return null;
         } else if ("staticGetText".equals(methodName)) {
             return (byte) 'X'; // TODO type check
