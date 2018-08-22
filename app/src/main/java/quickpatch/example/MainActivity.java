@@ -44,13 +44,13 @@ public class MainActivity extends AppCompatActivity {
             setContentView(R.layout.activity_main);
             // TextView text = findViewById(R.id.text);
             // text.setText("HELLO BUG WORLD: " + staticGetText(false));
-            findViewById(R.id.enable_proxy).setOnClickListener(new View.OnClickListener() {
+            findViewById(R.id.enable_patch).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Patcher.sEnablePatch = true;
                 }
             });
-            findViewById(R.id.disable_proxy).setOnClickListener(new View.OnClickListener() {
+            findViewById(R.id.disable_patch).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Patcher.sEnablePatch = false;

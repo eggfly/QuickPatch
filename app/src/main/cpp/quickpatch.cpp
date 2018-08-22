@@ -7,8 +7,9 @@
 #define LOGD(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
 
-jobject callNonVirtualMethod(JNIEnv *env, jobject obj, jchar returnType, jclass classOfMethod,
-                             jmethodID method, jvalue *argsArray);
+inline jobject
+callNonVirtualMethod(JNIEnv *env, jobject obj, jchar returnType, jclass classOfMethod,
+                     jmethodID method, jvalue *argsArray);
 
 template<typename ...T>
 inline jobject construct(JNIEnv *env, const char *className, const char *sig, T... params) {
@@ -62,9 +63,9 @@ Java_quickpatch_sdk_NativeBridge_callNonVirtualMethod(JNIEnv *env, jclass type, 
     return returnObj;
 }
 
-jobject callNonVirtualMethod(JNIEnv *env, jobject obj, jchar returnType,
-                             jclass classOfMethod, jmethodID method,
-                             jvalue *argsArray) {
+inline jobject callNonVirtualMethod(JNIEnv *env, jobject obj, jchar returnType,
+                                    jclass classOfMethod, jmethodID method,
+                                    jvalue *argsArray) {
     jobject returnObj = nullptr;
     switch (returnType) {
         case 'V': { // void

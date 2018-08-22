@@ -10,19 +10,19 @@
         android:id="@+id/text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello Bug World!" />
+        android:text="Hello bug world!" />
 
     <Button
-        android:id="@+id/enable_proxy"
+        android:id="@+id/enable_patch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="enable proxy" />
+        android:text="enable patch" />
 
     <Button
-        android:id="@+id/disable_proxy"
+        android:id="@+id/disable_patch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="disable proxy" />
+        android:text="disable patch" />
 
     <Button
         android:id="@+id/open_second"

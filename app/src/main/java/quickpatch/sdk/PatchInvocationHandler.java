@@ -2,6 +2,7 @@ package quickpatch.sdk;
 
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -29,18 +30,20 @@ public class PatchInvocationHandler implements InvocationHandler {
                     "onCreate",
                     "(Landroid/os/Bundle;)V", 'V', invokeArgs);
             activity.setContentView(R.layout.activity_main);
-            activity.findViewById(R.id.enable_proxy).setOnClickListener(new View.OnClickListener() {
+            activity.findViewById(R.id.enable_patch).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Patcher.sEnablePatch = true;
                 }
             });
-            activity.findViewById(R.id.disable_proxy).setOnClickListener(new View.OnClickListener() {
+            activity.findViewById(R.id.enable_patch).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Patcher.sEnablePatch = false;
                 }
             });
+            TextView tv = activity.findViewById(R.id.text);
+            tv.setText("Hello bug-free world!");
             Log.d(TAG, "isFinishing:" + activity.isFinishing());
             Object returnValue1 = ReflectionBridge.callNonPublicVirtualMethod(activity, "testProtectedIntMethod",
                     new Class[]{}, new Object[]{});
