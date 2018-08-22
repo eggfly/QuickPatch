@@ -24,10 +24,10 @@ public class PatchInvocationHandler implements InvocationHandler {
         // Log.d(TAG, "invoke() called, class: " + clazz.getCanonicalName() + ", method: " + methodName + ", isStatic: " + isStaticMethod);
         if ("onCreate".equals(methodName)) {
             final MainActivity activity = (MainActivity) thisObject;
-            NativeBridge.callNonvirtualVoidMethod(activity,
+            NativeBridge.callNonVirtualMethod(activity,
                     activity.getClass().getSuperclass().getCanonicalName().replace(".", "/"),
                     "onCreate",
-                    "(Landroid/os/Bundle;)V", invokeArgs);
+                    "(Landroid/os/Bundle;)V", 'V', invokeArgs);
             activity.setContentView(R.layout.activity_main);
             activity.findViewById(R.id.enable_proxy).setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -42,14 +42,27 @@ public class PatchInvocationHandler implements InvocationHandler {
                 }
             });
             Log.d(TAG, "isFinishing:" + activity.isFinishing());
-            Object returnValue = ReflectionBridge.callNonPublicVirtualMethod(activity, "testProtectedIntMethod",
+            Object returnValue1 = ReflectionBridge.callNonPublicVirtualMethod(activity, "testProtectedIntMethod",
                     new Class[]{}, new Object[]{});
-            Log.d(TAG, "callNonPublicVirtualMethod: testProtectedIntMethod returned:" + returnValue);
+            Log.d(TAG, "callNonPublicVirtualMethod: testProtectedIntMethod returned: " + returnValue1);
+            Object returnValue2 = ReflectionBridge.callNonPublicVirtualMethod(activity, "testProtectedIntArrayMethod",
+                    new Class[]{}, new Object[]{});
+            Log.d(TAG, "callNonPublicVirtualMethod: testProtectedIntArrayMethod returned: " + returnValue2);
+            Object shouldVoid = NativeBridge.callNonVirtualMethod(thisObject, thisObject.getClass().getCanonicalName().replace(".", "/"),
+                    "testPrivateVoidMethod", "()V", 'V');
+            Log.d(TAG, "callNonVirtualMethod: testPrivateVoidMethod returned: " + shouldVoid);
             return null;
         } else if ("staticGetText".equals(methodName)) {
             return (byte) 'X'; // TODO type check
         } else if ("toString".equals(methodName)) {
             return "toString...";
+        } else if ("isFinishing".equals(methodName)) {
+            Object returnValue = NativeBridge.callNonVirtualMethod(thisObject,
+                    thisObject.getClass().getSuperclass().getCanonicalName().replace(".", "/"), "isFinishing", "()Z", 'Z', invokeArgs);
+            Log.d(TAG, "callNonVirtualMethod: isFinishing returned: " + returnValue);
+            return returnValue;
+        } else if ("testProtectedIntArrayMethod".equals(methodName)) {
+            return new int[]{4, 5, 6};
         } else {
             return null;
         }

@@ -6,7 +6,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
-import quickpatch.sdk.NativeBridge;
 import quickpatch.sdk.Patcher;
 import quickpatch.sdk.ProxyResult;
 
@@ -26,8 +25,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         // super.onCreate(savedInstanceState);
 
-        System.out.println("testing call non-virtual method:");
-        NativeBridge.callNonvirtualVoidMethodTest(new SubSubClass());
+        // System.out.println("testing call non-virtual method:");
 
         // test helper
 //        nativeBridge.callNonvirtualVoidMethod(new SubSubClass(),
@@ -64,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(new Intent(MainActivity.this, SecondActivity.class));
                 }
             });
-            Log.d(TAG, "isFinishing:" + isFinishing());
+            Log.d(TAG, "isFinishing: " + isFinishing());
             testProtectedIntMethod();
         }
     }
@@ -75,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
                 "quickpatch.example.MainActivity",
                 "isFinishing", "()Z");
         if (proxyResult.isPatched) {
-            return proxyResult.isPatched;
+            return (boolean) proxyResult.returnValue;
         }
         return super.isFinishing();
     }
@@ -83,5 +81,20 @@ public class MainActivity extends AppCompatActivity {
     protected int testProtectedIntMethod() {
         Log.d(TAG, "testProtectedIntMethod called");
         return 888;
+    }
+
+    protected int[] testProtectedIntArrayMethod() {
+        final ProxyResult proxyResult = Patcher.proxy(this,
+                "quickpatch.example.MainActivity",
+                "testProtectedIntArrayMethod", "()[I");
+        if (proxyResult.isPatched) {
+            return (int[]) proxyResult.returnValue;
+        }
+        int[] array = new int[]{1, 2, 3};
+        return array;
+    }
+
+    private void testPrivateVoidMethod() {
+        Log.d(TAG, "testPrivateVoidMethod() called");
     }
 }

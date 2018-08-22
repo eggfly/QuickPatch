@@ -1,38 +1,39 @@
 #include <jni.h>
 #include <android/log.h>
 
-#define  LOG_TAG    "QuickPatchNativeBridge"
-#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define  LOG_TAG    "QuickPatch::NativeBridge"
+// #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+// #define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define LOGD(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
-extern "C"
-JNIEXPORT void JNICALL
-Java_quickpatch_sdk_NativeBridge_callNonvirtualVoidMethodTest(
-        JNIEnv *env,
-        jclass type,
-        jobject obj) {
-    LOGD("callNonvirtualVoidMethodTest");
-    jclass superClass = env->FindClass("quickpatch/example/SuperClass");
-    jclass subClass = env->FindClass("quickpatch/example/SubClass");
-    jclass subSubClass = env->FindClass("quickpatch/example/SubSubClass");
 
-    jmethodID superClassMethod = env->GetMethodID(superClass, "foo", "()V");
-    jmethodID subClassMethod = env->GetMethodID(subClass, "foo", "()V");
-    jmethodID subSubClassMethod = env->GetMethodID(subSubClass, "foo", "()V");
-    env->CallNonvirtualVoidMethod(obj, superClass, superClassMethod);
-    env->CallNonvirtualVoidMethod(obj, subClass, subClassMethod);
-    env->CallNonvirtualVoidMethod(obj, subSubClass, subSubClassMethod);
+jobject callNonVirtualMethod(JNIEnv *env, jobject obj, jchar returnType, jclass classOfMethod,
+                             jmethodID method, jvalue *argsArray);
+
+template<typename ...T>
+inline jobject construct(JNIEnv *env, const char *className, const char *sig, T... params) {
+    jclass cls = env->FindClass(className);
+    if (!cls)
+        return nullptr;
+
+    jmethodID ctor = env->GetMethodID(cls, "<init>", sig);
+    if (!ctor) {
+        env->DeleteLocalRef(cls);
+        return nullptr;
+    }
+
+    jobject result = env->NewObject(cls, ctor, params...);
+    env->DeleteLocalRef(cls);
+    return result;
 }
 
 extern "C"
-JNIEXPORT void JNICALL
-Java_quickpatch_sdk_NativeBridge_callNonvirtualVoidMethod(JNIEnv *env, jclass type, jobject obj,
-                                                          jstring classNameOfMethod,
-                                                          jstring methodName,
-                                                          jstring methodSignature,
-                                                          jobjectArray invokeArgs) {
-    LOGD("callNonvirtualVoidMethod");
+JNIEXPORT jobject JNICALL
+Java_quickpatch_sdk_NativeBridge_callNonVirtualMethod(JNIEnv *env, jclass type, jobject obj,
+                                                      jstring classNameOfMethod,
+                                                      jstring methodName, jstring methodSignature,
+                                                      jchar returnType, jobjectArray invokeArgs) {
+    LOGD("callNonvirtualMethod");
     const char *classNameOfMethodStr = env->GetStringUTFChars(classNameOfMethod, 0);
     const char *methodNameStr = env->GetStringUTFChars(methodName, 0);
     const char *methodSignatureStr = env->GetStringUTFChars(methodSignature, 0);
@@ -47,7 +48,8 @@ Java_quickpatch_sdk_NativeBridge_callNonvirtualVoidMethod(JNIEnv *env, jclass ty
         argsArray[i] = value;
     }
 
-    env->CallNonvirtualVoidMethodA(obj, classOfMethod, method, argsArray);
+    jobject returnObj = callNonVirtualMethod(env, obj, returnType, classOfMethod, method,
+                                             argsArray);
 
     for (int i = 0; i < argsCount; i++) {
         env->DeleteLocalRef(argsArray[i].l);
@@ -57,4 +59,65 @@ Java_quickpatch_sdk_NativeBridge_callNonvirtualVoidMethod(JNIEnv *env, jclass ty
     env->ReleaseStringUTFChars(classNameOfMethod, classNameOfMethodStr);
     env->ReleaseStringUTFChars(methodName, methodNameStr);
     env->ReleaseStringUTFChars(methodSignature, methodSignatureStr);
+    return returnObj;
+}
+
+jobject callNonVirtualMethod(JNIEnv *env, jobject obj, jchar returnType,
+                             jclass classOfMethod, jmethodID method,
+                             jvalue *argsArray) {
+    jobject returnObj = nullptr;
+    switch (returnType) {
+        case 'V': { // void
+            env->CallNonvirtualVoidMethodA(obj, classOfMethod, method, argsArray);
+            break;
+        }
+        case 'Z': { // boolean
+            jboolean r = env->CallNonvirtualBooleanMethodA(obj, classOfMethod, method, argsArray);
+            returnObj = construct(env, "java/lang/Boolean", "(Z)V", r);
+            break;
+        }
+        case 'B': { // byte
+            jbyte r = env->CallNonvirtualByteMethodA(obj, classOfMethod, method, argsArray);
+            returnObj = construct(env, "java/lang/Byte", "(B)V", r);
+            break;
+        }
+        case 'C': { // char
+            jbyte r = env->CallNonvirtualByteMethodA(obj, classOfMethod, method, argsArray);
+            returnObj = construct(env, "java/lang/Character", "(C)V", r);
+            break;
+        }
+        case 'S': { // short
+            jshort r = env->CallNonvirtualShortMethodA(obj, classOfMethod, method, argsArray);
+            returnObj = construct(env, "java/lang/Short", "(S)V", r);
+            break;
+        }
+        case 'I': { // int
+            jint r = env->CallNonvirtualIntMethodA(obj, classOfMethod, method, argsArray);
+            returnObj = construct(env, "java/lang/Integer", "(I)V", r);
+            break;
+        }
+        case 'J': { // long
+            jlong r = env->CallNonvirtualLongMethodA(obj, classOfMethod, method, argsArray);
+            returnObj = construct(env, "java/lang/Long", "(J)V", r);
+            break;
+        }
+        case 'F': { // float
+            jfloat r = env->CallNonvirtualFloatMethodA(obj, classOfMethod, method, argsArray);
+            returnObj = construct(env, "java/lang/Float", "(F)V", r);
+            break;
+        }
+        case 'D': { // double
+            jdouble r = env->CallNonvirtualDoubleMethodA(obj, classOfMethod, method, argsArray);
+            returnObj = construct(env, "java/lang/Double", "(D)V", r);
+            break;
+        }
+        case '[':   // array
+        case 'L': { // object
+            returnObj = env->CallNonvirtualObjectMethodA(obj, classOfMethod, method, argsArray);
+            break;
+        }
+        default:
+            break;
+    }
+    return returnObj;
 }
