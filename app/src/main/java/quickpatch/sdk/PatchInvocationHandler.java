@@ -20,26 +20,22 @@ public class PatchInvocationHandler implements InvocationHandler {
         Class clazz = (Class) args[1];
         final boolean isStaticMethod = thisObject == null;
         String methodName = (String) args[2];
-        Object[] invokeArgs = (Object[]) args[3];
-        // TODO: 还需要考虑不同参数的函数重载
-        // Log.d(TAG, "invoke() called, class: " + clazz.getCanonicalName() + ", method: " + methodName + ", isStatic: " + isStaticMethod);
-        if ("onCreate".equals(methodName)) {
+        String methodSignature = (String) args[3];
+        Object[] invokeArgs = (Object[]) args[4];
+        Log.d(TAG, "invoke() called, thisObject: " + thisObject + ", class: " + clazz.getCanonicalName() + ", method: " + methodName + methodSignature + ", isStatic: " + isStaticMethod);
+        if ("onCreate".equals(methodName) && "(Landroid/os/Bundle;)V".equals(methodSignature)) {
             final MainActivity activity = (MainActivity) thisObject;
-            NativeBridge.callNonVirtualMethod(activity,
-                    activity.getClass().getSuperclass().getCanonicalName().replace(".", "/"),
-                    "onCreate",
-                    "(Landroid/os/Bundle;)V", 'V', invokeArgs);
+            ReflectionBridge.callSuperMethodNative(activity, methodName, methodSignature, invokeArgs);
             activity.setContentView(R.layout.activity_main);
             activity.findViewById(R.id.enable_patch).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Patcher.sEnablePatch = true;
+                    Patcher.getInstance().testLoadPatch(activity);
                 }
             });
             activity.findViewById(R.id.enable_patch).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Patcher.sEnablePatch = false;
                 }
             });
             TextView tv = activity.findViewById(R.id.text);
@@ -51,17 +47,16 @@ public class PatchInvocationHandler implements InvocationHandler {
             Object returnValue2 = ReflectionBridge.callNonPublicVirtualMethod(activity, "testProtectedIntArrayMethod",
                     new Class[]{}, new Object[]{});
             Log.d(TAG, "callNonPublicVirtualMethod: testProtectedIntArrayMethod returned: " + returnValue2);
-            Object shouldVoid = NativeBridge.callNonVirtualMethod(thisObject, thisObject.getClass().getCanonicalName().replace(".", "/"),
-                    "testPrivateVoidMethod", "()V", 'V');
+            Object shouldVoid = ReflectionBridge.callThisMethodNative(thisObject,
+                    "testPrivateVoidMethod", "()V", new Object[]{});
             Log.d(TAG, "callNonVirtualMethod: testPrivateVoidMethod returned: " + shouldVoid);
             return null;
         } else if ("staticGetText".equals(methodName)) {
-            return (byte) 'X'; // TODO type check
+            return (byte) 'X';
         } else if ("toString".equals(methodName)) {
             return "toString...";
         } else if ("isFinishing".equals(methodName)) {
-            Object returnValue = NativeBridge.callNonVirtualMethod(thisObject,
-                    thisObject.getClass().getSuperclass().getCanonicalName().replace(".", "/"), "isFinishing", "()Z", 'Z', invokeArgs);
+            Object returnValue = ReflectionBridge.callSuperMethodNative(thisObject, "isFinishing", "()Z", invokeArgs);
             Log.d(TAG, "callNonVirtualMethod: isFinishing returned: " + returnValue);
             return returnValue;
         } else if ("testProtectedIntArrayMethod".equals(methodName)) {

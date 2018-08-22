@@ -32,3 +32,16 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+
+task assembleQuickPatchExample {
+    dependsOn "gradleplugin:uploadArchives"
+    dependsOn "app:assembleDebug"
+    tasks.findByPath('app:assembleDebug').mustRunAfter(tasks.findByPath('gradleplugin:uploadArchives'))
+}
+
+task installQuickPatchExample {
+    dependsOn "gradleplugin:uploadArchives"
+    dependsOn "app:installDebug"
+    tasks.findByPath('app:installDebug').mustRunAfter(tasks.findByPath('gradleplugin:uploadArchives'))
+}

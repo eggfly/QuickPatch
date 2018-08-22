@@ -9,9 +9,6 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.regex.Matcher
 
-/**
- * Created by mivanzhang on 16/11/3.
- */
 class ConvertUtils {
     static List<CtClass> toCtClasses(Collection<TransformInput> inputs, ClassPool classPool) {
         List<String> classNames = new ArrayList<>()

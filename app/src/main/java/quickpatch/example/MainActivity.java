@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         final ProxyResult proxyResult = Patcher.proxy(this,
                 "quickpatch.example.MainActivity",
                 "onCreate", "(Landroid/os/Bundle;)V",
-                savedInstanceState);
+                new Object[]{savedInstanceState});
         if (proxyResult.isPatched) {
             // return proxyResult.returnValue;
         } else {
@@ -47,13 +47,12 @@ public class MainActivity extends AppCompatActivity {
             findViewById(R.id.enable_patch).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Patcher.sEnablePatch = true;
+                    Patcher.getInstance().testLoadPatch(MainActivity.this);
                 }
             });
             findViewById(R.id.disable_patch).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Patcher.sEnablePatch = false;
                 }
             });
             findViewById(R.id.open_second).setOnClickListener(new View.OnClickListener() {
@@ -71,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean isFinishing() {
         final ProxyResult proxyResult = Patcher.proxy(this,
                 "quickpatch.example.MainActivity",
-                "isFinishing", "()Z");
+                "isFinishing", "()Z", new Object[]{});
         if (proxyResult.isPatched) {
             return (boolean) proxyResult.returnValue;
         }
@@ -86,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
     protected int[] testProtectedIntArrayMethod() {
         final ProxyResult proxyResult = Patcher.proxy(this,
                 "quickpatch.example.MainActivity",
-                "testProtectedIntArrayMethod", "()[I");
+                "testProtectedIntArrayMethod", "()[I", new Object[]{});
         if (proxyResult.isPatched) {
             return (int[]) proxyResult.returnValue;
         }

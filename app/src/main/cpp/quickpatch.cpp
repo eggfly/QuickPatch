@@ -1,7 +1,7 @@
 #include <jni.h>
 #include <android/log.h>
 
-#define  LOG_TAG    "QuickPatch::NativeBridge"
+#define  LOG_TAG    "QuickPatch::ReflectionBridge"
 // #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 // #define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define LOGD(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -30,11 +30,13 @@ inline jobject construct(JNIEnv *env, const char *className, const char *sig, T.
 
 extern "C"
 JNIEXPORT jobject JNICALL
-Java_quickpatch_sdk_NativeBridge_callNonVirtualMethod(JNIEnv *env, jclass type, jobject obj,
-                                                      jstring classNameOfMethod,
-                                                      jstring methodName, jstring methodSignature,
-                                                      jchar returnType, jobjectArray invokeArgs) {
-    LOGD("callNonvirtualMethod");
+Java_quickpatch_sdk_ReflectionBridge_callNonVirtualMethod(JNIEnv *env, jclass type, jobject obj,
+                                                          jstring classNameOfMethod,
+                                                          jstring methodName,
+                                                          jstring methodSignature,
+                                                          jchar returnType,
+                                                          jobjectArray invokeArgs) {
+    LOGD("callNonVirtualMethod");
     const char *classNameOfMethodStr = env->GetStringUTFChars(classNameOfMethod, 0);
     const char *methodNameStr = env->GetStringUTFChars(methodName, 0);
     const char *methodSignatureStr = env->GetStringUTFChars(methodSignature, 0);

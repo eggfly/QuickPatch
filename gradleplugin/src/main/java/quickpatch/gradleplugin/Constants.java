@@ -103,7 +103,7 @@ public class Constants {
     public static final String SHORT = "short";
     public static final String LANG_BYTE = "java.lang.Byte";
     public static final String BYTE = "byte";
-    public static final String LANG_CHARACTER = "Character";
+    public static final String LANG_CHARACTER = "java.lang.Character";
     public static final String CHAR = "char";
 //
 //    public static final String METHOD_MAP_OUT_PATH = "/outputs/robust/methodsMap.robust";

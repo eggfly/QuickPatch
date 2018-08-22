@@ -23,7 +23,7 @@ public class CodePatcher {
                 ctClass.setModifiers(AccessFlag.setPublic(ctClass.getModifiers()));
                 if (ctClass.isInterface() || ctClass.getDeclaredMethods().length < 1) {
                     // skip the unsatisfied class
-                    System.out.println("skip class: " + ctClass.getName());
+                    System.out.println("ignore class: " + ctClass.getName());
                     zipFile(ctClass.toBytecode(), outStream, ctClass.getName().replaceAll("\\.", "/") + ".class");
                     continue;
                 }
@@ -39,7 +39,6 @@ public class CodePatcher {
                             boolean isStatic = (ctMethod.getModifiers() & AccessFlag.STATIC) != 0;
                             CtClass returnType = ctMethod.getReturnType();
                             String returnTypeString = returnType.getName();
-                            //construct the code will be inserted in string format
                             String body = "Object argThis = null;";
                             if (!isStatic) {
                                 body += "\nargThis = $0;";
@@ -51,9 +50,10 @@ public class CodePatcher {
                             System.out.println("Patching method: " + ctMethod.getName()
                                     + ", signature: " + ctMethod.getSignature()
                                     + ", genericSignature: " + ctMethod.getGenericSignature()
-                                    + ", returnType: " + returnTypeString + ", body: \n" + body);
+                                    + ", returnType: " + returnTypeString);
+                            // System.out.println("code body: \n" + body);
                             if (ctMethod.getGenericSignature() != null) {
-                                System.out.println("===============================\nGENERIC SIGNATURE:: " + ctMethod.getGenericSignature());
+                                System.out.println("FOUND GENERIC SIGNATURE: " + ctMethod.getGenericSignature());
                             }
                             ctBehavior.insertBefore(body);
                         }
@@ -73,7 +73,7 @@ public class CodePatcher {
     private static boolean isNeedInsertClass(String className) {
         //这样可以在需要埋点的剔除指定的类
         if (className.startsWith("quickpatch.sdk")) {
-            System.err.println(className);
+            System.out.println("skip sdk class: " + className);
             return false;
         }
 //        for (String exceptName : exceptPackageList) {
@@ -87,7 +87,7 @@ public class CodePatcher {
             }
         }
         // 默认不插桩
-        return false;
+        return true;
     }
 
     private static void zipFile(byte[] classBytesArray, ZipOutputStream zos, String entryName) {
@@ -107,7 +107,6 @@ public class CodePatcher {
             return false;
         }
 
-        // synthetic 方法暂时不aop 比如AsyncTask 会生成一些同名 synthetic方法,对synthetic 以及private的方法也插入的代码，主要是针对lambda表达式
         if ((it.getModifiers() & AccessFlag.SYNTHETIC) != 0 && !AccessFlag.isPrivate(it.getModifiers())) {
             return false;
         }
@@ -155,14 +154,14 @@ public class CodePatcher {
     }
 
     /**
-     * 根据传入类型判断调用PathProxy的方法
+     * 根据传入类型来生成返回语句
      *
      * @param type 返回类型
      * @return 返回return语句
      */
     private static String getReturnStatement(String type) {
         switch (type) {
-            case Constants.CONSTRUCTOR:
+            case Constants.CONSTRUCTOR: // TODO
                 return "";
             case Constants.LANG_VOID:
                 return "return null;";
@@ -201,6 +200,7 @@ public class CodePatcher {
             case Constants.LANG_CHARACTER:
                 return "return ((java.lang.Character)proxyResult.returnValue);";
             default:
+                // array or class name, etc..
                 return "return ((" + type + ")proxyResult.returnValue);";
         }
     }
