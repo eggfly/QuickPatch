@@ -15,12 +15,12 @@ template<typename ...T>
 inline jobject construct(JNIEnv *env, const char *className, const char *sig, T... params) {
     jclass cls = env->FindClass(className);
     if (!cls)
-        return nullptr;
+        return NULL;
 
     jmethodID ctor = env->GetMethodID(cls, "<init>", sig);
     if (!ctor) {
         env->DeleteLocalRef(cls);
-        return nullptr;
+        return NULL;
     }
 
     jobject result = env->NewObject(cls, ctor, params...);
@@ -67,7 +67,7 @@ Java_quickpatch_sdk_ReflectionBridge_callNonVirtualMethod(JNIEnv *env, jclass ty
 inline jobject callNonVirtualMethod(JNIEnv *env, jobject obj, jchar returnType,
                                     jclass classOfMethod, jmethodID method,
                                     jvalue *argsArray) {
-    jobject returnObj = nullptr;
+    jobject returnObj = NULL;
     switch (returnType) {
         case 'V': { // void
             env->CallNonvirtualVoidMethodA(obj, classOfMethod, method, argsArray);
