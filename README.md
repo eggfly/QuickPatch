@@ -14,6 +14,9 @@
 - 计划支持构造函数和增加成员函数的热修复
 - 可能计划支持非Android的纯Java代码的热修复
 
+#### demo
+![demo](demo.gif)
+
 #### 使用说明
 
 使用AndroidStudio或者./gradlew编译assembleQuickPatchExample任务或者installQuickPatchExample任务
