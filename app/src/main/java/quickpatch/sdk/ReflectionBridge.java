@@ -9,14 +9,18 @@ import java.lang.reflect.Method;
  * 2. super方法通过JNI方式调用非虚方法
  */
 public class ReflectionBridge {
+
+    static {
+        System.loadLibrary("quickpatch");
+    }
+
     public static Object callVirtualMethod(Object obj, String methodName, Class[] argTypes, Object[] args, boolean setAccessible) {
         try {
             Method method = obj.getClass().getDeclaredMethod(methodName, argTypes);
             if (setAccessible) {
                 method.setAccessible(true);
             }
-            Object returnValue = method.invoke(obj, args);
-            return returnValue;
+            return method.invoke(obj, args);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -77,10 +81,10 @@ public class ReflectionBridge {
      * @param invokeArgs
      * @return
      */
-    private static native Object callNonVirtualMethod(Object obj,
-                                                      String classNameOfMethod,
-                                                      String methodName,
-                                                      String methodSignature,
-                                                      char returnType,
-                                                      Object[] invokeArgs);
+    public static native Object callNonVirtualMethod(Object obj,
+                                                     String classNameOfMethod,
+                                                     String methodName,
+                                                     String methodSignature,
+                                                     char returnType,
+                                                     Object... invokeArgs);
 }

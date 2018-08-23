@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">QuickPatch</string>
+    <string name="app_desc">年轻人的第一个插桩热修复框架</string>
 </resources>

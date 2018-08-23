@@ -33,8 +33,7 @@ JNIEXPORT jobject JNICALL
 Java_quickpatch_sdk_ReflectionBridge_callNonVirtualMethod(JNIEnv *env, jclass type, jobject obj,
                                                           jstring classNameOfMethod,
                                                           jstring methodName,
-                                                          jstring methodSignature,
-                                                          jchar returnType,
+                                                          jstring methodSignature, jchar returnType,
                                                           jobjectArray invokeArgs) {
     LOGD("callNonVirtualMethod");
     const char *classNameOfMethodStr = env->GetStringUTFChars(classNameOfMethod, 0);
@@ -124,3 +123,4 @@ inline jobject callNonVirtualMethod(JNIEnv *env, jobject obj, jchar returnType,
     }
     return returnObj;
 }
+
