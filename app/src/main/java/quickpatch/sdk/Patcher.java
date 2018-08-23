@@ -3,12 +3,13 @@ package quickpatch.sdk;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.os.Bundle;
 import android.os.Environment;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -48,7 +49,7 @@ public final class Patcher {
             patchDir.mkdirs();
             File privateDex = new File(patchDir, "patch.dex");
             try {
-                Utils.copy(dex, privateDex);
+                FileUtils.copy(dex, privateDex);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -103,15 +104,26 @@ public final class Patcher {
         if (mHasGlobalPatch && mPatchClassLoader != null) {
             try {
                 Class<?> patchClass = mPatchClassLoader.loadClass(className + SdkConstants.PATCH_CLASS_SUFFIX);
-                Method patchMethod = patchClass.getDeclaredMethod(methodName, new Class[]{Object.class, Bundle.class});
-                patchMethod.setAccessible(true);
-                final Object returnValue = patchMethod.invoke(null, thisObject, null);
-                return ProxyResult.createActiveProxyResult(returnValue);
+                Method[] methods = patchClass.getDeclaredMethods();
+                for (Method method : methods) {
+                    String sig = TypeUtils.getSignature(method);
+                    Log.d(TAG, "" + method + ", sig:" + sig);
+                    if (TextUtils.equals(sig, methodSignature)) {
+                        Class<?> clazz = Class.forName(className);
+                        Constructor<?> constructor = patchClass.getDeclaredConstructor(clazz);
+                        constructor.setAccessible(true);
+                        Object patchInstance = constructor.newInstance(thisObject);
+                        final Object returnValue = method.invoke(patchInstance, args);
+                        return ProxyResult.createActiveProxyResult(returnValue);
+                    }
+                }
             } catch (ClassNotFoundException e) {
                 // it's normally ok
             } catch (NoSuchMethodException e) {
                 // it's normally ok
             } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
                 e.printStackTrace();

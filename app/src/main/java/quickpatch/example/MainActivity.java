@@ -37,41 +37,40 @@ public class MainActivity extends AppCompatActivity {
                 "onCreate", "(Landroid/os/Bundle;)V",
                 new Object[]{savedInstanceState});
         if (proxyResult.isPatched) {
-            // return proxyResult.returnValue;
-        } else {
-            super.onCreate(savedInstanceState);
-            checkStoragePermission();
-            setContentView(R.layout.activity_main);
-            ActionBar actionBar = getSupportActionBar();
-            actionBar.setTitle(actionBar.getTitle() + " (pid=" + Process.myPid() + ")");
-            findViewById(R.id.enable_patch).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String path = Patcher.getInstance().testLoadPatch(MainActivity.this);
-                    if (TextUtils.isEmpty(path)) {
-                        Toast.makeText(MainActivity.this, "未发现载dex补丁文件，挺好的", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(MainActivity.this, "已加载补丁:\n" + path, Toast.LENGTH_SHORT).show();
-                        finish();
-                        startActivity(new Intent(MainActivity.this, MainActivity.class));
-                    }
-                }
-            });
-            findViewById(R.id.disable_patch).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Patcher.getInstance().unloadPatch(MainActivity.this);
-                }
-            });
-            findViewById(R.id.open_second).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startActivity(new Intent(MainActivity.this, SecondActivity.class));
-                }
-            });
-            Log.d(TAG, "isFinishing: " + isFinishing());
-            testProtectedIntMethod();
+            return;
         }
+        super.onCreate(savedInstanceState);
+        checkStoragePermission();
+        setContentView(R.layout.activity_main);
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setTitle(actionBar.getTitle() + " (pid=" + Process.myPid() + ")");
+        findViewById(R.id.enable_patch).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String path = Patcher.getInstance().testLoadPatch(MainActivity.this);
+                if (TextUtils.isEmpty(path)) {
+                    Toast.makeText(MainActivity.this, "未发现载dex补丁文件，挺好的", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "已加载补丁:\n" + path, Toast.LENGTH_SHORT).show();
+                    finish();
+                    startActivity(new Intent(MainActivity.this, MainActivity.class));
+                }
+            }
+        });
+        findViewById(R.id.disable_patch).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Patcher.getInstance().unloadPatch(MainActivity.this);
+            }
+        });
+        findViewById(R.id.open_second).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, SecondActivity.class));
+            }
+        });
+        Log.d(TAG, "isFinishing: " + isFinishing());
+        testProtectedIntMethod();
     }
 
     private void checkStoragePermission() {
