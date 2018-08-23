@@ -81,7 +81,7 @@ public class ReflectionBridge {
      * @param invokeArgs
      * @return
      */
-    public static native Object callNonVirtualMethod(Object obj,
+    private static native Object callNonVirtualMethod(Object obj,
                                                      String classNameOfMethod,
                                                      String methodName,
                                                      String methodSignature,

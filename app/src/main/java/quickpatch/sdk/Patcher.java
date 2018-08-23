@@ -35,12 +35,18 @@ public final class Patcher {
         return SingletonHolder.instance;
     }
 
-    public void testLoadPatch(Context context) {
+    public String testLoadPatch(Context context) {
+        if (mHasGlobalPatch) {
+            Log.w(TAG, "global patch already exists");
+            return null;
+        }
         String apkPath = getSelfApkPath(context);
         Log.d(TAG, apkPath);
         File dex = new File(Environment.getExternalStorageDirectory(), "patch.dex");
         if (dex.exists()) {
-            File privateDex = new File(context.getCacheDir(), "patch.dex");
+            File patchDir = new File(context.getCacheDir(), SdkConstants.QUICK_PATCH_DIR);
+            patchDir.mkdirs();
+            File privateDex = new File(patchDir, "patch.dex");
             try {
                 Utils.copy(dex, privateDex);
             } catch (IOException e) {
@@ -48,13 +54,16 @@ public final class Patcher {
             }
             ClassLoader parent = Patcher.class.getClassLoader();
             Log.d(TAG, "" + parent);
+            // parent classloader可以设置null，但是为了方便native库的加载，借用了父classloader的native库加载路径
             mPatchClassLoader = new DexClassLoader(privateDex.getAbsolutePath(),
                     context.getCacheDir().getAbsolutePath(), null, parent);
             privateDex.delete();
             Log.d(TAG, "" + mPatchClassLoader);
             mHasGlobalPatch = true;
+            return dex.getAbsolutePath();
         } else {
             Log.d(TAG, "patch not exist.");
+            return null;
         }
     }
 
@@ -90,10 +99,10 @@ public final class Patcher {
     }
 
     private ProxyResult invokeProxy(Object thisObject, String className, String methodName, String methodSignature, Object[] args) {
-        // TODO: 判断是否有patch的逻辑、性能问题、各版本机型适配
+        // TODO: 性能问题、各版本机型适配
         if (mHasGlobalPatch && mPatchClassLoader != null) {
             try {
-                Class<?> patchClass = mPatchClassLoader.loadClass(className + "Patch");
+                Class<?> patchClass = mPatchClassLoader.loadClass(className + SdkConstants.PATCH_CLASS_SUFFIX);
                 Method patchMethod = patchClass.getDeclaredMethod(methodName, new Class[]{Object.class, Bundle.class});
                 patchMethod.setAccessible(true);
                 final Object returnValue = patchMethod.invoke(null, thisObject, null);

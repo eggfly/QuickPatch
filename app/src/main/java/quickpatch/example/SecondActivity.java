@@ -15,6 +15,6 @@ public class SecondActivity extends AppCompatActivity {
     }
 
     private static String staticGetText(boolean booleanValue) {
-        return booleanValue ? "yes bug text" : "no bug text";
+        return "here's nothing right now";
     }
 }

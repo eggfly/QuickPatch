@@ -14,7 +14,6 @@
         android:text="@string/app_desc"
         android:textSize="20sp" />
 
-
     <Button
         android:id="@+id/enable_patch"
         android:layout_width="wrap_content"
@@ -40,5 +39,6 @@
         android:layout_gravity="center"
         android:layout_margin="20dp"
         android:text="Hello bug world"
+        android:textColor="@android:color/holo_red_light"
         android:textSize="20sp" />
 </LinearLayout>

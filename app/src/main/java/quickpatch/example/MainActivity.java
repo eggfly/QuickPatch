@@ -3,10 +3,13 @@ package quickpatch.example;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -28,16 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        checkStoragePermission();
         // super.onCreate(savedInstanceState);
-        // System.out.println("testing call non-virtual method:");
-
-        // test helper
-//        nativeBridge.callNonvirtualVoidMethod(new SubSubClass(),
-//                "quickpatch/example/SubClass",
-//                "foo",
-//                "()V");
-
         final ProxyResult proxyResult = Patcher.proxy(this,
                 "quickpatch.example.MainActivity",
                 "onCreate", "(Landroid/os/Bundle;)V",
@@ -46,14 +40,21 @@ public class MainActivity extends AppCompatActivity {
             // return proxyResult.returnValue;
         } else {
             super.onCreate(savedInstanceState);
+            checkStoragePermission();
             setContentView(R.layout.activity_main);
+            ActionBar actionBar = getSupportActionBar();
+            actionBar.setTitle(actionBar.getTitle() + " (pid=" + Process.myPid() + ")");
             findViewById(R.id.enable_patch).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Patcher.getInstance().testLoadPatch(MainActivity.this);
-                    finish();
-                    startActivity(new Intent(MainActivity.this, MainActivity.class));
-                    Toast.makeText(MainActivity.this, "补丁已加载", Toast.LENGTH_SHORT).show();
+                    String path = Patcher.getInstance().testLoadPatch(MainActivity.this);
+                    if (TextUtils.isEmpty(path)) {
+                        Toast.makeText(MainActivity.this, "未发现载dex补丁文件，挺好的", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "已加载补丁:\n" + path, Toast.LENGTH_SHORT).show();
+                        finish();
+                        startActivity(new Intent(MainActivity.this, MainActivity.class));
+                    }
                 }
             });
             findViewById(R.id.disable_patch).setOnClickListener(new View.OnClickListener() {
@@ -110,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
         return 888;
     }
 
-    protected int[] testProtectedIntArrayMethod() {
+    protected int[] testProtectedIntArrayMethod(boolean bool) {
         final ProxyResult proxyResult = Patcher.proxy(this,
                 "quickpatch.example.MainActivity",
                 "testProtectedIntArrayMethod", "()[I", new Object[]{});
