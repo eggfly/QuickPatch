@@ -19,16 +19,12 @@
 
 #### 使用说明
 
-使用AndroidStudio或者./gradlew编译assembleQuickPatchExample任务或者installQuickPatchExample任务
+打开app/build.gradle中的一行apply plugin: 'quickpatch.gradleplugin'
+然后使用AndroidStudio或者./gradlew执行下面任务:
 
 ```bash
-./gradlew installQuickPatchExample
-```
-
-相当于:
-```bash
-./gradlew gradleplugin:uploadArchives
-./gradlew app:installDebug
+./gradlew gradleplugin:uploadArchives # 编译插桩插件
+./gradlew app:installDebug # 使用插件编译app代码并插桩
 ```
 
 

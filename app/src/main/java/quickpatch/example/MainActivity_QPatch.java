@@ -27,8 +27,6 @@ public class MainActivity_QPatch extends QPatchBase<MainActivity> {
         super(thisObject);
     }
 
-    // TODO: change thisObject to MainActivity
-
     /**
      * TODO: 补丁函数第一个参数是原来的this对象，或者统一弄一个成员变量?
      * super函数或非public函数需要使用ReflectionBridge反射调用

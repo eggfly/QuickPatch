@@ -24,7 +24,22 @@ public class MainActivity extends AppCompatActivity {
 
     public MainActivity() {
         // TODO: hot fix <init>
-        Log.d(TAG, "MainActivity.<init>()");
+        Log.d(TAG, "MainActivity.<init>() called ");
+    }
+
+    public MainActivity(boolean notUsedConstructorTest) {
+        final ProxyResult proxyResult = Patcher.proxy(this,
+                "quickpatch.example.MainActivity",
+                "<init>", "(Z)V",
+                new Object[]{notUsedConstructorTest});
+        if (proxyResult.isPatched) {
+            return;
+        }
+        Log.d(TAG, "notUsedConstructorTest");
+    }
+
+    static {
+        Log.d(TAG, "MainActivity.<clinit>()");
     }
 
     private static final int PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 0x1;

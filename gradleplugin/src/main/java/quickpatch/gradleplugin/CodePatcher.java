@@ -11,8 +11,10 @@ import java.util.zip.ZipOutputStream;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.CtClass;
+import javassist.CtConstructor;
 import javassist.CtMethod;
 import javassist.bytecode.AccessFlag;
+import javassist.bytecode.MethodInfo;
 
 public class CodePatcher {
     public static void insertCode(List<CtClass> box, File jarFile) throws IOException, CannotCompileException {
@@ -20,42 +22,58 @@ public class CodePatcher {
         for (CtClass ctClass : box) {
             if (isNeedInsertClass(ctClass.getName())) {
                 // change class modifier
-                ctClass.setModifiers(AccessFlag.setPublic(ctClass.getModifiers()));
+                // ctClass.setModifiers(AccessFlag.setPublic(ctClass.getModifiers()));
                 if (ctClass.isInterface() || ctClass.getDeclaredMethods().length < 1) {
                     // skip the unsatisfied class
                     System.out.println("ignore class: " + ctClass.getName());
                     zipFile(ctClass.toBytecode(), outStream, ctClass.getName().replaceAll("\\.", "/") + ".class");
                     continue;
+                } else {
+                    System.out.println("Current class: " + ctClass.getName());
                 }
 
                 for (CtBehavior ctBehavior : ctClass.getDeclaredBehaviors()) {
-                    if (!isQualifiedMethod(ctBehavior)) {
+                    MethodInfo methodInfo = ctBehavior.getMethodInfo();
+                    if (!isQualifiedMethod(methodInfo)) {
                         continue;
                     }
                     // here comes the method will be inserted code
                     try {
-                        if (ctBehavior.getMethodInfo().isMethod()) {
-                            CtMethod ctMethod = (CtMethod) ctBehavior;
-                            boolean isStatic = (ctMethod.getModifiers() & AccessFlag.STATIC) != 0;
-                            CtClass returnType = ctMethod.getReturnType();
-                            String returnTypeString = returnType.getName();
+                        if (methodInfo.isMethod() || methodInfo.isConstructor()) {
+                            CtMethod ctMethod = null;
+                            if (methodInfo.isMethod()) {
+                                ctMethod = (CtMethod) ctBehavior;
+                            }
+                            boolean isConstructor = !methodInfo.isMethod();
+                            boolean isStatic = (ctBehavior.getModifiers() & AccessFlag.STATIC) != 0;
+                            CtClass returnType = ctMethod != null ? ctMethod.getReturnType() : null;
+                            String returnTypeString = returnType != null ? returnType.getName() : Constants.CONSTRUCTOR;
                             String body = "Object argThis = null;";
                             if (!isStatic) {
                                 body += "\nargThis = $0;";
                             }
                             body += "\nfinal quickpatch.sdk.ProxyResult proxyResult = ";
                             body += String.format("quickpatch.sdk.Patcher.proxy(argThis, \"%s\", \"%s\", \"%s\", $args); ",
-                                    ctClass.getName(), ctMethod.getName(), ctMethod.getSignature());
+                                    ctClass.getName(), ctBehavior.getName(), ctBehavior.getSignature());
                             body += "\nif (proxyResult.isPatched) {\n  " + getReturnStatement(returnTypeString) + "\n}";
-                            System.out.println("Patching method: " + ctMethod.getName()
-                                    + ", signature: " + ctMethod.getSignature()
-                                    + ", genericSignature: " + ctMethod.getGenericSignature()
+                            System.out.println("Patching method: " + ctBehavior.getName()
+                                    + ", signature: " + ctBehavior.getSignature()
+                                    + ", genericSignature: " + ctBehavior.getGenericSignature()
                                     + ", returnType: " + returnTypeString);
-                            // System.out.println("code body: \n" + body);
-                            if (ctMethod.getGenericSignature() != null) {
-                                System.out.println("FOUND GENERIC SIGNATURE: " + ctMethod.getGenericSignature());
+                            if (ctBehavior.getGenericSignature() != null) {
+                                System.out.println("FOUND GENERIC SIGNATURE: " + ctBehavior.getGenericSignature());
                             }
-                            ctBehavior.insertBefore(body);
+                            if (isConstructor) {
+                                CtConstructor constructor = (CtConstructor) ctBehavior;
+                                // TODO: 构造函数插桩支持替换第一行的super或者this
+                                // TODO: 构造函数插桩是否必要?
+                                // TODO: 构造函数的名字没写成<init> 有问题..
+                                constructor.insertBeforeBody(body);
+                            } else {
+                                ctBehavior.insertBefore(body);
+                            }
+                            // System.out.println("Patching with code body: \n" + body);
+                            System.out.println("Patched OK");
                         }
                     } catch (Throwable t) {
                         // here we ignore the error
@@ -102,25 +120,60 @@ public class CodePatcher {
         }
     }
 
-    private static boolean isQualifiedMethod(CtBehavior it) throws CannotCompileException {
-        if (it.getMethodInfo().isStaticInitializer()) {
+    private static boolean isQualifiedMethod(MethodInfo methodInfo) {
+        final int accessFlags = methodInfo.getAccessFlags();
+        System.err.println("Method info: " + methodInfo + ", " + methodInfo.getName() + ", " + methodInfo.getDescriptor());
+
+        if (methodInfo.isConstructor()) {
+            System.err.println("Found constructor: " + methodInfo.getName());
+        }
+
+        final int isPublic = (accessFlags & AccessFlag.PUBLIC) != 0 ? 1 : 0;
+        final int isPrivate = (accessFlags & AccessFlag.PRIVATE) != 0 ? 1 : 0;
+        final int isProtected = (accessFlags & AccessFlag.PROTECTED) != 0 ? 1 : 0;
+        final int isStatic = (accessFlags & AccessFlag.STATIC) != 0 ? 1 : 0;
+        final int isFinal = (accessFlags & AccessFlag.FINAL) != 0 ? 1 : 0;
+        final int isSynchronized = (accessFlags & AccessFlag.SYNCHRONIZED) != 0 ? 1 : 0;
+        final int isVolatileOrBridge = (accessFlags & AccessFlag.VOLATILE) != 0 ? 1 : 0;
+        final int isTransientOrVarArgs = (accessFlags & AccessFlag.TRANSIENT) != 0 ? 1 : 0;
+        final int isNative = (accessFlags & AccessFlag.NATIVE) != 0 ? 1 : 0;
+        final int isInterface = (accessFlags & AccessFlag.INTERFACE) != 0 ? 1 : 0;
+        final int isAbstract = (accessFlags & AccessFlag.ABSTRACT) != 0 ? 1 : 0;
+        final int isStrict = (accessFlags & AccessFlag.STRICT) != 0 ? 1 : 0;
+        final int isSynthetic = (accessFlags & AccessFlag.SYNTHETIC) != 0 ? 1 : 0;
+        final int isAnnotation = (accessFlags & AccessFlag.ANNOTATION) != 0 ? 1 : 0;
+        final int isEnum = (accessFlags & AccessFlag.ENUM) != 0 ? 1 : 0;
+        final int isMandated = (accessFlags & AccessFlag.MANDATED) != 0 ? 1 : 0;
+
+        System.err.println(String.format("flags: isPublic:%d isPrivate:%d "
+                        + "isProtected:%d isStatic:%d isFinal:%d isSynchronized:%d isVolatileOrBridge:%d "
+                        + "isTransientOrVarArgs:%d isNative:%d isInterface:%d isAbstract:%d isStrict:%d isSynthetic:%d "
+                        + "isAnnotation:%d isEnum:%d isMandated:%d",
+                isPublic, isPrivate,
+                isProtected, isStatic, isFinal, isSynchronized, isVolatileOrBridge,
+                isTransientOrVarArgs, isNative, isInterface, isAbstract, isStrict, isSynthetic,
+                isAnnotation, isEnum, isMandated));
+
+        if (methodInfo.isStaticInitializer()) {
             return false;
         }
 
-        if ((it.getModifiers() & AccessFlag.SYNTHETIC) != 0 && !AccessFlag.isPrivate(it.getModifiers())) {
-            return false;
-        }
-        if (it.getMethodInfo().isConstructor()) {
+        // TODO: 不懂为啥SYNTHETIC还要判断是不是private
+        if ((accessFlags & AccessFlag.SYNTHETIC) != 0 && !AccessFlag.isPrivate(accessFlags)) {
             return false;
         }
 
-        if ((it.getModifiers() & AccessFlag.ABSTRACT) != 0) {
+        if (methodInfo.isConstructor()) {
+            return true;
+        }
+
+        if ((accessFlags & AccessFlag.ABSTRACT) != 0) {
             return false;
         }
-        if ((it.getModifiers() & AccessFlag.NATIVE) != 0) {
+        if ((accessFlags & AccessFlag.NATIVE) != 0) {
             return false;
         }
-        if ((it.getModifiers() & AccessFlag.INTERFACE) != 0) {
+        if ((accessFlags & AccessFlag.INTERFACE) != 0) {
             return false;
         }
 //
@@ -162,7 +215,7 @@ public class CodePatcher {
     private static String getReturnStatement(String type) {
         switch (type) {
             case Constants.CONSTRUCTOR: // TODO
-                return "";
+                return "return;";
             case Constants.LANG_VOID:
                 return "return null;";
             case Constants.VOID:
