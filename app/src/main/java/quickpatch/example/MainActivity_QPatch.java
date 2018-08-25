@@ -6,6 +6,8 @@ import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.airbnb.lottie.LottieAnimationView;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -49,6 +51,8 @@ public class MainActivity_QPatch extends QPatchBase<MainActivity> {
         Log.d(TAG, "isFinishing: " + isFinishing);
         Object returnValue2 = ReflectionBridge.callNonPublicVirtualMethod(thisObject, "testProtectedIntArrayMethod", new Class[]{boolean.class}, new Object[]{false});
         Log.d(TAG, "returnValue2: " + returnValue2);
+        LottieAnimationView lottieView = thisObject.findViewById(R.id.lottie);
+        lottieView.setAnimation("oh_yes.json");
     }
 
     public ArrayList<Object>[][] test(HashMap<Object, ArrayList<Boolean>>[][] arg) {

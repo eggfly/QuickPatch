@@ -62,14 +62,15 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.enable_patch).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String path = Patcher.getInstance().testLoadPatch(MainActivity.this);
+                String path = Patcher.getInstance().loadPatch(MainActivity.this);
                 if (TextUtils.isEmpty(path)) {
-                    Toast.makeText(MainActivity.this, "未发现载dex补丁文件，挺好的", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "未发现载dex补丁文件，使用apk里的_QPatch类模拟效果", Toast.LENGTH_SHORT).show();
+                    Patcher.getInstance().simulateLoadPatch(MainActivity.this);
                 } else {
                     Toast.makeText(MainActivity.this, "已加载补丁:\n" + path, Toast.LENGTH_SHORT).show();
-                    finish();
-                    startActivity(new Intent(MainActivity.this, MainActivity.class));
                 }
+                finish();
+                startActivity(new Intent(MainActivity.this, MainActivity.class));
             }
         });
         findViewById(R.id.disable_patch).setOnClickListener(new View.OnClickListener() {

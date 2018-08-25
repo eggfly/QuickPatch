@@ -14,6 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import dalvik.system.DexClassLoader;
+import quickpatch.example.MainActivity;
 
 public final class Patcher {
 
@@ -25,8 +26,9 @@ public final class Patcher {
     }
 
     public void unloadPatch(Context context) {
-
+        // TODO
     }
+
 
     private static class SingletonHolder {
         private static Patcher instance = new Patcher();
@@ -36,7 +38,7 @@ public final class Patcher {
         return SingletonHolder.instance;
     }
 
-    public String testLoadPatch(Context context) {
+    public String loadPatch(Context context) {
         if (mHasGlobalPatch) {
             Log.w(TAG, "global patch already exists");
             return null;
@@ -66,6 +68,11 @@ public final class Patcher {
             Log.d(TAG, "patch not exist.");
             return null;
         }
+    }
+
+    public void simulateLoadPatch(Context context) {
+        mPatchClassLoader = Patcher.class.getClassLoader();
+        mHasGlobalPatch = true;
     }
 
     private String getSelfApkPath(Context context) {
@@ -106,9 +113,8 @@ public final class Patcher {
                 Class<?> patchClass = mPatchClassLoader.loadClass(className + SdkConstants.PATCH_CLASS_SUFFIX);
                 Method[] methods = patchClass.getDeclaredMethods();
                 for (Method method : methods) {
-                    String sig = TypeUtils.getSignature(method);
-                    Log.d(TAG, "" + method + ", sig:" + sig);
-                    if (TextUtils.equals(sig, methodSignature)) {
+                    if (TextUtils.equals(methodName, method.getName())
+                            && TextUtils.equals(TypeUtils.getSignature(method), methodSignature)) {
                         Class<?> clazz = Class.forName(className);
                         Constructor<?> constructor = patchClass.getDeclaredConstructor(clazz);
                         constructor.setAccessible(true);
