@@ -50,5 +50,5 @@
         android:layout_gravity="center_horizontal"
         app:lottie_autoPlay="true"
         app:lottie_fileName="oh_no.json"
-        app:lottie_loop="true" />
+        app:lottie_repeatCount="5" />
 </LinearLayout>
