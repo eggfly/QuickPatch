@@ -6,15 +6,35 @@
 
 基于函数插桩，兼容性好（Android版本升级不需要做修改），支持热更新无需重启app，参考了美团的Robust插桩热修复框架，精简了很多实现细节，代码可读性高
 
+#### 一句话原理
+
+
+简单地讲，就是通过编译时在每个函数的头部插入一个if判断和一个proxy代理，就可以在运行时动态替换实现，无需重启。代码如下：
+```java
+protected void onCreate(Bundle savedInstanceState) {
+    if (_QPatchStub != null) {
+        // _QPatchStub.proxy() will check method existance and call it
+        MethodProxyResult proxyResult = _QPatchStub.proxy(this, "onCreate", "(Landroid/os/Bundle;)V", new Object[]{savedInstanceState});
+        if (proxyResult.isPatched) {
+            return;
+        }
+    }
+    // origin implementation below
+    super.onCreate(savedInstanceState);
+    // ...
+}
+```
+
+
 #### 设计思路
 
-- 暂未实现自动生成补丁
 - QuickPatch和美团Robust的区别是，Robust的编译和dex阶段分别使用ASM和Smali做了处理，QuickPatch仅在gradle编译java到class阶段使用Javassist处理，逻辑简单
+- 不支持自动生成dex补丁（复杂度高，代码可读性差），所以需要手动生成补丁，但是提供了补丁类模版，写起来很方便
 - 对于super的处理使用native调用CallNonVirtual##TYPE##Method()系列方法实现
 - 计划支持构造函数和增加成员函数的热修复
 - 可能计划支持非Android的纯Java代码的热修复
 
-#### demo
+#### DEMO
 ![demo](demo.gif)
 
 #### 使用说明
@@ -33,6 +53,14 @@
 - 补丁文件名一般是patch.dex, 生成dex需要手动使用命令，比如dx --dex --output=patch.dex MainActivity_QPatch.class
 - 补丁文件需要手动放置到sd卡下，比如adb push patch.dex /sdcard/
 - 然后点击app内的Enable Patch按钮即可实时加载补丁，看到pid不会有变化
+
+#### 性能优化思路
+1. 减少没有patch的时候所有函数调用损耗
+2. 减少有patch时，但没有走到patch涉及到的类时的损耗
+3. 减少有patch时，走到patch类，但是没走到patch函数时的损耗
+4. 减少有patch时，走到patch类，并走到patch函数时的损耗
+5. 优化patch函数内不包含反射，和包含native反射或java反射的这三种情况
+
 
 #### Task list
 

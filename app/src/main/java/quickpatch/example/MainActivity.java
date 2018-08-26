@@ -15,11 +15,14 @@ import android.view.View;
 import android.widget.Toast;
 
 import quickpatch.sdk.Patcher;
-import quickpatch.sdk.ProxyResult;
+import quickpatch.sdk.MethodProxyResult;
+import quickpatch.sdk.QuickPatchStub;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
 public class MainActivity extends AppCompatActivity {
+    public static QuickPatchStub _QPatchStub;
+    public Object[] _QFieldStub;
     private static final String TAG = MainActivity.class.getSimpleName();
 
     public MainActivity() {
@@ -28,12 +31,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public MainActivity(boolean notUsedConstructorTest) {
-        final ProxyResult proxyResult = Patcher.proxy(this,
-                "quickpatch.example.MainActivity",
-                "<init>", "(Z)V",
-                new Object[]{notUsedConstructorTest});
-        if (proxyResult.isPatched) {
-            return;
+        if (_QPatchStub != null) {
+            final MethodProxyResult methodProxyResult = _QPatchStub.proxy(this,
+
+                    "<init>", "(Z)V",
+                    new Object[]{notUsedConstructorTest});
+            if (methodProxyResult.isPatched) {
+                return;
+            }
         }
         Log.d(TAG, "notUsedConstructorTest");
     }
@@ -46,14 +51,15 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // super.onCreate(savedInstanceState);
-        final ProxyResult proxyResult = Patcher.proxy(this,
-                "quickpatch.example.MainActivity",
-                "onCreate", "(Landroid/os/Bundle;)V",
-                new Object[]{savedInstanceState});
-        if (proxyResult.isPatched) {
-            return;
+        if (_QPatchStub != null) {
+            final MethodProxyResult methodProxyResult = _QPatchStub.proxy(this,
+                    "onCreate", "(Landroid/os/Bundle;)V",
+                    new Object[]{savedInstanceState});
+            if (methodProxyResult.isPatched) {
+                return;
+            }
         }
+        // super.onCreate(savedInstanceState);
         super.onCreate(savedInstanceState);
         checkStoragePermission();
         setContentView(R.layout.activity_main);
@@ -85,8 +91,24 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, SecondActivity.class));
             }
         });
+        findViewById(R.id.benchmark).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                benchmark();
+            }
+        });
         Log.d(TAG, "isFinishing: " + isFinishing());
         testProtectedIntMethod();
+    }
+
+    void benchmark() {
+        final int loops = 10000;
+        final long startTime = System.currentTimeMillis();
+        for (int i = 0; i < loops; i++) {
+            isFinishing();
+        }
+        final long time = System.currentTimeMillis() - startTime;
+        Toast.makeText(MainActivity.this, loops + " loops cost " + time + "ms", Toast.LENGTH_LONG).show();
     }
 
     private void checkStoragePermission() {
@@ -112,11 +134,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean isFinishing() {
-        final ProxyResult proxyResult = Patcher.proxy(this,
-                "quickpatch.example.MainActivity",
-                "isFinishing", "()Z", new Object[]{});
-        if (proxyResult.isPatched) {
-            return (boolean) proxyResult.returnValue;
+        if (_QPatchStub != null) {
+            final MethodProxyResult methodProxyResult = _QPatchStub.proxy(this,
+                    "isFinishing", "()Z", new Object[]{});
+            if (methodProxyResult.isPatched) {
+                return (boolean) methodProxyResult.returnValue;
+            }
         }
         return super.isFinishing();
     }
@@ -127,11 +150,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected int[] testProtectedIntArrayMethod(boolean bool) {
-        final ProxyResult proxyResult = Patcher.proxy(this,
-                "quickpatch.example.MainActivity",
-                "testProtectedIntArrayMethod", "()[I", new Object[]{});
-        if (proxyResult.isPatched) {
-            return (int[]) proxyResult.returnValue;
+        if (_QPatchStub != null) {
+            final MethodProxyResult methodProxyResult = _QPatchStub.proxy(this,
+                    "testProtectedIntArrayMethod", "()[I", new Object[]{});
+            if (methodProxyResult.isPatched) {
+                return (int[]) methodProxyResult.returnValue;
+            }
         }
         int[] array = new int[]{1, 2, 3};
         return array;

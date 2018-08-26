@@ -6,6 +6,9 @@ package quickpatch.sdk;
  * @param <T>
  */
 public abstract class QPatchBase<T> {
+    /**
+     * 被修复的原来的类的this实例
+     */
     protected final T thisObject;
 
     protected QPatchBase(T thisObject) {

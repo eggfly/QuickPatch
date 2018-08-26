@@ -69,6 +69,8 @@ dependencies {
     // implementation group: 'org.json', name: 'json', version: '20180813'
     // implementation group: 'com.google.guava', name: 'guava', version: '26.0-android'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
+    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.2'
+
     implementation group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.4.0'
     implementation group: 'com.github.bumptech.glide', name: 'glide', version: '4.8.0'
     implementation group: 'org.greenrobot', name: 'eventbus', version: '3.1.1'

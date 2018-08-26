@@ -10,8 +10,8 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,14 +22,13 @@ public final class Patcher {
 
     private static final String TAG = Patcher.class.getSimpleName();
     private volatile ClassLoader mPatchClassLoader;
-    private volatile boolean mHasGlobalPatch = false;
     private volatile Set<String> mQPatchClassNames;
 
     private Patcher() {
     }
 
     public void unloadPatch(Context context) {
-        // TODO
+        // TODO 不支持
     }
 
 
@@ -42,10 +41,6 @@ public final class Patcher {
     }
 
     public String loadPatch(Context context) {
-        if (mHasGlobalPatch) {
-            Log.w(TAG, "global patch already exists");
-            return null;
-        }
         String apkPath = getSelfApkPath(context);
         Log.d(TAG, apkPath);
         File dex = new File(Environment.getExternalStorageDirectory(), "patch.dex");
@@ -60,13 +55,14 @@ public final class Patcher {
             }
             ClassLoader parent = Patcher.class.getClassLoader();
             Log.d(TAG, "" + parent);
-            mQPatchClassNames = ClassUtils.findPatchClassesInDex(dex.getPath(), SdkConstants.QPATCH_CLASS_SUFFIX);
-            // parent classloader可以设置null，但是为了方便native库的加载，借用了父classloader的native库加载路径
+            // parent classloader可以设置null
+            // 但是为了 1.方便native库的加载 2.方便找到原来的老类并插入静态stub, 所以借用了父classloader的native库加载路径
             mPatchClassLoader = new DexClassLoader(privateDex.getAbsolutePath(),
                     context.getCacheDir().getAbsolutePath(), null, parent);
             privateDex.delete();
             Log.d(TAG, "" + mPatchClassLoader);
-            mHasGlobalPatch = true;
+            mQPatchClassNames = ClassUtils.findPatchClassesInDex(dex.getPath(), SdkConstants.QPATCH_CLASS_SUFFIX);
+            updateStubFields();
             return dex.getAbsolutePath();
         } else {
             Log.d(TAG, "patch not exist.");
@@ -74,17 +70,55 @@ public final class Patcher {
         }
     }
 
+    private void updateStubFields() {
+        for (String newClassName : mQPatchClassNames) {
+            int index = newClassName.lastIndexOf(SdkConstants.QPATCH_CLASS_SUFFIX);
+            if (index > 0) {
+                final String oldClassName = newClassName.substring(0, index);
+                try {
+                    Class<?> oldClass = mPatchClassLoader.loadClass(oldClassName);
+                    Field[] fields = oldClass.getDeclaredFields();
+                    Field stubField = null;
+                    for (Field field : fields) {
+                        if (TextUtils.equals(field.getType().getCanonicalName(), QuickPatchStub.class.getCanonicalName()) && TextUtils.equals(field.getDeclaringClass().getCanonicalName(), oldClass.getCanonicalName())) {
+                            stubField = field;
+                            break;
+                        }
+                    }
+                    if (stubField == null) {
+                        Log.d(TAG, "ERROR: found a new patch class but cannot find stub field on " + oldClass);
+                    } else {
+                        Class<?> newClass = mPatchClassLoader.loadClass(newClassName);
+                        Constructor<QuickPatchStubImpl> constructor = QuickPatchStubImpl.class.getDeclaredConstructor(Class.class, Class.class);
+                        QuickPatchStubImpl stubImplObj = constructor.newInstance(oldClass, newClass);
+                        stubField.set(null, stubImplObj);
+                        Log.d(TAG, "SUCCESS: set stub field and patched for class: " + oldClassName);
+                    }
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (InstantiationException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     /**
-     * TODO: 临时实现需要删除
+     * TODO: 临时测试
      *
      * @param context
      */
     public void simulateLoadPatch(Context context) {
         mPatchClassLoader = Patcher.class.getClassLoader();
-        // TODO 临时实现
         mQPatchClassNames = new HashSet<>();
         mQPatchClassNames.add(MainActivity_QPatch.class.getCanonicalName());
-        mHasGlobalPatch = true;
+        updateStubFields();
     }
 
     private String getSelfApkPath(Context context) {
@@ -98,61 +132,5 @@ public final class Patcher {
         }
 
         return null;
-    }
-
-    /**
-     * 为保证性能在第一层检查，判断全局是否有热修复补丁
-     * TODO: 需要性能测试，也许new Object数组在有逃逸检测优化后，不需要在堆上分配也不需要gc
-     *
-     * @return
-     */
-    public static boolean hasGlobalPatch() {
-        return getInstance().mHasGlobalPatch;
-    }
-
-    public static ProxyResult proxy(Object thisObject,
-                                    String className,
-                                    String methodName,
-                                    String methodSignature,
-                                    Object[] args) {
-        return getInstance().invokeProxy(thisObject, className, methodName, methodSignature, args);
-    }
-
-    private ProxyResult invokeProxy(Object thisObject, String className, String methodName, String methodSignature, Object[] args) {
-        // TODO: 性能问题、各版本机型适配
-        if (mHasGlobalPatch && mPatchClassLoader != null && mQPatchClassNames != null) {
-            String fullQPatchClassName = className + SdkConstants.QPATCH_CLASS_SUFFIX;
-            if (mQPatchClassNames.contains(fullQPatchClassName)) {
-                try {
-                    Class<?> patchClass = mPatchClassLoader.loadClass(fullQPatchClassName);
-                    Method[] methods = patchClass.getDeclaredMethods();
-                    for (Method method : methods) {
-                        if (TextUtils.equals(methodName, method.getName())
-                                && TextUtils.equals(ClassUtils.getSignature(method), methodSignature)) {
-                            Class<?> clazz = Class.forName(className);
-                            Constructor<?> constructor = patchClass.getDeclaredConstructor(clazz);
-                            constructor.setAccessible(true);
-                            Object patchInstance = constructor.newInstance(thisObject);
-                            final Object returnValue = method.invoke(patchInstance, args);
-                            return ProxyResult.createActiveProxyResult(returnValue);
-                        }
-                    }
-                } catch (ClassNotFoundException e) {
-                    // it's normally ok
-                } catch (NoSuchMethodException e) {
-                    // it's normally ok
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InstantiationException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-            }
-            return ProxyResult.NO_PROXY;
-        } else {
-            // do nothing
-            return ProxyResult.NO_PROXY;
-        }
     }
 }

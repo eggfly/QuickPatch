@@ -3,6 +3,12 @@ package quickpatch.gradleplugin;
 import java.util.ArrayList;
 
 public class Constants {
+    @SuppressWarnings("SpellCheckingInspection")
+    public static final String STATIC_QPATCH_STUB_TYPE_NAME = "quickpatch.sdk.QuickPatchStub";
+    @SuppressWarnings("SpellCheckingInspection")
+    public static final String STATIC_QPATCH_STUB_FIELD_NAME = "_QPatchStub";
+    public static final String QPATCH_CLASS_SUFFIX = "_QPatch";
+
 //    static {
 //        RFileClassSet.add("R$array");
 //        RFileClassSet.add("R$xml");

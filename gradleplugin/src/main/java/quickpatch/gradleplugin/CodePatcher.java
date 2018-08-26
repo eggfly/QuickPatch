@@ -9,10 +9,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javassist.CannotCompileException;
+import javassist.ClassPool;
 import javassist.CtBehavior;
 import javassist.CtClass;
 import javassist.CtConstructor;
+import javassist.CtField;
 import javassist.CtMethod;
+import javassist.NotFoundException;
 import javassist.bytecode.AccessFlag;
 import javassist.bytecode.MethodInfo;
 
@@ -20,6 +23,7 @@ public class CodePatcher {
     public static void insertCode(List<CtClass> box, File jarFile) throws IOException, CannotCompileException {
         ZipOutputStream outStream = new JarOutputStream(new FileOutputStream(jarFile));
         for (CtClass ctClass : box) {
+            // TODO: isNeedInsertClass在没有任何函数的类里 就跳过了
             if (isNeedInsertClass(ctClass.getName())) {
                 // change class modifier
                 // ctClass.setModifiers(AccessFlag.setPublic(ctClass.getModifiers()));
@@ -32,6 +36,17 @@ public class CodePatcher {
                     System.out.println("Current class: " + ctClass.getName());
                 }
 
+                // add a static field for every class
+                try {
+                    ctClass.getDeclaredField(Constants.STATIC_QPATCH_STUB_FIELD_NAME);
+                } catch (NotFoundException e) {
+                    ClassPool classPool = ctClass.getClassPool();
+                    CtClass type = classPool.getOrNull(Constants.STATIC_QPATCH_STUB_TYPE_NAME);
+                    CtField ctField = new CtField(type, Constants.STATIC_QPATCH_STUB_FIELD_NAME, ctClass);
+                    ctField.setModifiers(AccessFlag.PUBLIC | AccessFlag.STATIC);
+                    ctClass.addField(ctField);
+                    System.err.println("added static field");
+                }
                 for (CtBehavior ctBehavior : ctClass.getDeclaredBehaviors()) {
                     MethodInfo methodInfo = ctBehavior.getMethodInfo();
                     if (!isQualifiedMethod(methodInfo)) {
@@ -48,14 +63,15 @@ public class CodePatcher {
                             boolean isStatic = (ctBehavior.getModifiers() & AccessFlag.STATIC) != 0;
                             CtClass returnType = ctMethod != null ? ctMethod.getReturnType() : null;
                             String returnTypeString = returnType != null ? returnType.getName() : Constants.CONSTRUCTOR;
-                            String body = "Object argThis = null;";
+                            String body = "if (_QPatchStub != null) {\n";
+                            body += "  Object argThis = null;\n";
                             if (!isStatic) {
-                                body += "\nargThis = $0;";
+                                body += "  argThis = $0;\n";
                             }
-                            body += "\nfinal quickpatch.sdk.ProxyResult proxyResult = ";
-                            body += String.format("quickpatch.sdk.Patcher.proxy(argThis, \"%s\", \"%s\", \"%s\", $args); ",
-                                    ctClass.getName(), ctBehavior.getName(), ctBehavior.getSignature());
-                            body += "\nif (proxyResult.isPatched) {\n  " + getReturnStatement(returnTypeString) + "\n}";
+                            body += String.format("  final quickpatch.sdk.MethodProxyResult proxyResult = _QPatchStub.proxy(argThis, \"%s\", \"%s\", $args); \n",
+                                    ctBehavior.getName(), ctBehavior.getSignature());
+                            body += "  if (proxyResult.isPatched) {\n    " + getReturnStatement(returnTypeString) + "\n  }\n";
+                            body += "}";
                             System.out.println("Patching method: " + ctBehavior.getName()
                                     + ", signature: " + ctBehavior.getSignature()
                                     + ", genericSignature: " + ctBehavior.getGenericSignature()
@@ -65,14 +81,14 @@ public class CodePatcher {
                             }
                             if (isConstructor) {
                                 CtConstructor constructor = (CtConstructor) ctBehavior;
-                                // TODO: 构造函数插桩支持替换第一行的super或者this
+                                // insertBeforeBody 所以构造函数插桩不支持替换第一行的super或者this
                                 // TODO: 构造函数插桩是否必要?
                                 // TODO: 构造函数的名字没写成<init> 有问题..
                                 constructor.insertBeforeBody(body);
                             } else {
                                 ctBehavior.insertBefore(body);
                             }
-                            // System.out.println("Patching with code body: \n" + body);
+                            System.out.println("Patching with code body: \n" + body);
                             System.out.println("Patched OK");
                         }
                     } catch (Throwable t) {
@@ -89,13 +105,17 @@ public class CodePatcher {
     }
 
     private static boolean isNeedInsertClass(String className) {
-        //这样可以在需要埋点的剔除指定的类
+        // 在需要埋点的剔除指定的类
+        if (className.endsWith(Constants.QPATCH_CLASS_SUFFIX)) {
+            System.out.println("skip patch class: " + className);
+            return false;
+        }
         if (className.startsWith("quickpatch.sdk")) {
             System.out.println("skip sdk class: " + className);
             return false;
         }
 //        for (String exceptName : exceptPackageList) {
-//            if (className.startsWith(exceptName)) {
+//            if (class Name.startsWith(exceptName)) {
 //                return false;
 //            }
 //        }
@@ -104,7 +124,7 @@ public class CodePatcher {
                 return true;
             }
         }
-        // 默认不插桩
+        // TODO: 需要改成其他类库默认不插桩
         return true;
     }
 
@@ -158,7 +178,7 @@ public class CodePatcher {
             return false;
         }
 
-        // TODO: 不懂为啥SYNTHETIC还要判断是不是private
+        // 为何SYNTHETIC还要判断是不是private，SYNTHETIC的情况有哪些？
         if ((accessFlags & AccessFlag.SYNTHETIC) != 0 && !AccessFlag.isPrivate(accessFlags)) {
             return false;
         }
@@ -214,7 +234,7 @@ public class CodePatcher {
      */
     private static String getReturnStatement(String type) {
         switch (type) {
-            case Constants.CONSTRUCTOR: // TODO
+            case Constants.CONSTRUCTOR:
                 return "return;";
             case Constants.LANG_VOID:
                 return "return null;";
