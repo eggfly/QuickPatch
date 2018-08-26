@@ -36,7 +36,7 @@ public class CodePatcher {
                     System.out.println("Current class: " + ctClass.getName());
                 }
 
-                // add a static field for every class
+                // add static field for every class
                 try {
                     ctClass.getDeclaredField(Constants.STATIC_QPATCH_STUB_FIELD_NAME);
                 } catch (NotFoundException e) {
@@ -46,6 +46,18 @@ public class CodePatcher {
                     ctField.setModifiers(AccessFlag.PUBLIC | AccessFlag.STATIC);
                     ctClass.addField(ctField);
                     System.err.println("added static field");
+                }
+
+                // add a instance field: Object[] _QFieldStub for every class
+                try {
+                    ctClass.getDeclaredField(Constants.QPATCH_OBJECT_ARRAY_STUB_FIELD_NAME);
+                } catch (NotFoundException e) {
+                    ClassPool classPool = ctClass.getClassPool();
+                    CtClass type = classPool.getOrNull("java.lang.Object[]");
+                    CtField ctField = new CtField(type, Constants.QPATCH_OBJECT_ARRAY_STUB_FIELD_NAME, ctClass);
+                    ctField.setModifiers(AccessFlag.PUBLIC);
+                    ctClass.addField(ctField);
+                    System.err.println("added non-static field");
                 }
                 for (CtBehavior ctBehavior : ctClass.getDeclaredBehaviors()) {
                     MethodInfo methodInfo = ctBehavior.getMethodInfo();
@@ -68,11 +80,12 @@ public class CodePatcher {
                             if (!isStatic) {
                                 body += "  argThis = $0;\n";
                             }
+                            String methodName = isConstructor ? "__init__" : ctBehavior.getName();
                             body += String.format("  final quickpatch.sdk.MethodProxyResult proxyResult = _QPatchStub.proxy(argThis, \"%s\", \"%s\", $args); \n",
-                                    ctBehavior.getName(), ctBehavior.getSignature());
+                                    methodName, ctBehavior.getSignature());
                             body += "  if (proxyResult.isPatched) {\n    " + getReturnStatement(returnTypeString) + "\n  }\n";
                             body += "}";
-                            System.out.println("Patching method: " + ctBehavior.getName()
+                            System.out.println("Patching method: " + methodName
                                     + ", signature: " + ctBehavior.getSignature()
                                     + ", genericSignature: " + ctBehavior.getGenericSignature()
                                     + ", returnType: " + returnTypeString);

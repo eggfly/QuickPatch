@@ -24,10 +24,11 @@ public class MainActivity extends AppCompatActivity {
     public static QuickPatchStub _QPatchStub;
     public Object[] _QFieldStub;
     private static final String TAG = MainActivity.class.getSimpleName();
+    public String fooStringValue = "foo string value with error";
 
     public MainActivity() {
         // TODO: hot fix <init>
-        Log.d(TAG, "MainActivity.<init>() called ");
+        Log.d(TAG, "MainActivity.<init>() called");
     }
 
     public MainActivity(boolean notUsedConstructorTest) {
@@ -59,8 +60,8 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
-        // super.onCreate(savedInstanceState);
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate origin method called, thisObject.fooStringValue=" + this.fooStringValue);
         checkStoragePermission();
         setContentView(R.layout.activity_main);
         ActionBar actionBar = getSupportActionBar();

@@ -22,7 +22,7 @@ public class QuickPatchStubImpl implements QuickPatchStub {
     public QuickPatchStubImpl(Class oldClass, Class patchedClass) {
         mPatchedClassMethods = patchedClass.getDeclaredMethods();
         try {
-            mPatchedClassConstructor = patchedClass.getDeclaredConstructor(oldClass);
+            mPatchedClassConstructor = patchedClass.getDeclaredConstructor(Object.class);
             mPatchedClassConstructor.setAccessible(true);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();

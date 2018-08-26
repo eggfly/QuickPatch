@@ -17,6 +17,7 @@ import java.util.Set;
 
 import dalvik.system.DexClassLoader;
 import quickpatch.example.MainActivity_QPatch;
+import quickpatch.example.SecondActivity_QPatch;
 
 public final class Patcher {
 
@@ -118,6 +119,7 @@ public final class Patcher {
         mPatchClassLoader = Patcher.class.getClassLoader();
         mQPatchClassNames = new HashSet<>();
         mQPatchClassNames.add(MainActivity_QPatch.class.getCanonicalName());
+        mQPatchClassNames.add(SecondActivity_QPatch.class.getCanonicalName());
         updateStubFields();
     }
 

@@ -7,7 +7,9 @@ public class Constants {
     public static final String STATIC_QPATCH_STUB_TYPE_NAME = "quickpatch.sdk.QuickPatchStub";
     @SuppressWarnings("SpellCheckingInspection")
     public static final String STATIC_QPATCH_STUB_FIELD_NAME = "_QPatchStub";
+    @SuppressWarnings("SpellCheckingInspection")
     public static final String QPATCH_CLASS_SUFFIX = "_QPatch";
+    public static final String QPATCH_OBJECT_ARRAY_STUB_FIELD_NAME = "_QFieldStub";
 
 //    static {
 //        RFileClassSet.add("R$array");

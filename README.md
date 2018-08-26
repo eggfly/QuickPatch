@@ -72,10 +72,11 @@ protected void onCreate(Bundle savedInstanceState) {
 - [x] ClassLoader的preverify问题 -- 插桩热修复 没这个问题了
 - [x] ClassLoader类加载和类卸载问题，是否存在OOM？-- 插桩热修复 没这个问题了
 - [x] 需要热修复的部分代码的Annotation标记 -- 暂时不实现，为了简单手动编写QPatch类的相应代码
-- [x] 构造函数支持热修复 -- TODO
-- [ ] 支持增加成员变量 -- TODO
+- [x] 构造函数支持热修复
+- [x] 支持增加成员变量
+- [ ] 支持static函数热修复 -- TODO
 - [x] 支持增加函数 -- 直接在QPatch里手动调用新的函数即可
-- [ ] 基类和子类是否均需要增加Object[]作为成员变量的问题 -- TODO 需要
+- [x] 基类和子类是均需要增加Object[]作为成员变量的问题 -- 需要，而且均为public标志的可以同名
 - [ ] 混淆可能带来的name mapping问题 -- TODO: 混淆前就确定类名/函数名/函数签名，但是调用的时候需要考虑用反射
 - [ ] 类的动态加载带来的安全问题 -- TODO
 - [ ] apk/jar原始代码的完整性问题，版本控制问题 -- TODO
