@@ -17,9 +17,9 @@ public class QuickPatchStubImpl implements QuickPatchStub {
     /**
      * cache patched class constructor for speedup
      */
-    private Constructor mPatchedClassConstructor;
+    private Constructor<Object> mPatchedClassConstructor;
 
-    public QuickPatchStubImpl(Class oldClass, Class patchedClass) {
+    public QuickPatchStubImpl(Class oldClass, Class<Object> patchedClass) {
         mPatchedClassMethods = patchedClass.getDeclaredMethods();
         try {
             mPatchedClassConstructor = patchedClass.getDeclaredConstructor(Object.class);
