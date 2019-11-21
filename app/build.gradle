@@ -1,0 +1,80 @@
+apply plugin: 'com.android.application'
+apply plugin: 'quickpatch.gradleplugin'
+
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "quickpatch.example"
+        minSdkVersion 17
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        externalNativeBuild {
+            cmake {
+                cppFlags ""
+            }
+        }
+        multiDexEnabled true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:28.0.0-rc01'
+    // implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+
+    // 为了使用更多的类测试multi-dex和插桩插件
+    implementation 'com.android.support:recyclerview-v7:28.0.0-rc01'
+    // implementation 'com.android.support:support-vector-drawable:27.1.1'
+    // implementation 'com.android.support:support-annotations:27.1.1'
+//    implementation 'com.android.support:support-v4:27.1.1'
+//    implementation 'com.android.support:support-v13:27.1.1'
+//     implementation 'com.android.support:design:27.1.1'
+    // implementation 'com.android.support:gridlayout-v7:27.1.1'
+    // implementation 'com.android.support:mediarouter-v7:27.1.1'
+//    implementation 'com.android.support:cardview-v7:27.1.1'
+//    implementation 'com.android.support:palette-v7:27.1.1'
+//    implementation 'com.android.support:leanback-v17:27.1.1'
+//    implementation 'com.android.support:exifinterface:27.1.1'
+//    implementation 'com.android.support.test:runner:1.0.2'
+//    implementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+//    implementation 'com.android.support.test.espresso:espresso-contrib:3.0.2'
+//    implementation 'com.android.databinding:library:3.1.4'
+//    implementation 'com.android.databinding:baseLibrary:3.1.4'
+//     implementation 'com.android.databinding:compiler:3.1.4'
+//    implementation 'com.android.databinding:adapters:3.1.4'
+//     implementation 'com.google.android.gms:play-services:12.0.1'
+//     implementation 'com.google.android.gms:play-services-ads:15.0.1'
+//     implementation 'com.google.android.gms:play-services-wearable:15.0.1'
+//     implementation 'com.google.android.gms:play-services-maps:15.0.1'
+//     implementation 'com.google.android.support:wearable:2.3.0'
+
+    implementation group: 'com.airbnb.android', name: 'lottie', version: '2.6.0-beta19'
+//    implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
+//    implementation group: 'com.squareup.picasso', name: 'picasso', version: '2.5.2'
+//    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.11.0'
+    // implementation group: 'com.squareup.okhttp', name: 'okhttp', version: '2.7.5'
+    // implementation group: 'org.json', name: 'json', version: '20180813'
+    // implementation group: 'com.google.guava', name: 'guava', version: '26.0-android'
+//    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
+//    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.2'
+
+//    implementation group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.4.0'
+//    implementation group: 'com.github.bumptech.glide', name: 'glide', version: '4.8.0'
+//    implementation group: 'org.greenrobot', name: 'eventbus', version: '3.1.1'
+//    implementation group: 'com.nostra13.universalimageloader', name: 'universal-image-loader', version: '1.9.5'
+    // implementation group: 'com.birbit', name: 'android-priority-jobqueue', version: '2.0.1'
+
+}

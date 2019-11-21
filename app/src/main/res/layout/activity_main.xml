@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="5dp"
+    tools:context="quickpatch.example.MainActivity">
+
+    <TextView
+        android:id="@+id/app_desc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_desc"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/enable_patch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="enable patch" />
+
+    <Button
+        android:id="@+id/disable_patch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="disable patch" />
+
+    <Button
+        android:id="@+id/benchmark"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="benchmark" />
+
+    <Button
+        android:id="@+id/open_second"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="open second activity" />
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="20dp"
+        android:text="Hello bug world"
+        android:textColor="@android:color/holo_red_light"
+        android:textSize="20sp" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottie"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:layout_gravity="center_horizontal"
+        app:lottie_autoPlay="true"
+        app:lottie_fileName="oh_no.json"
+        app:lottie_repeatCount="5" />
+</LinearLayout>
